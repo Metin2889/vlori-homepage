@@ -118,7 +118,7 @@ export default function ScrollBloom(props: Props) {
     const narrow = w < 820
     const active = Math.min(stages.length - 1, Math.floor(p * stages.length * 0.999 + 0.0001))
     const local = Math.max(0, Math.min(1, p * stages.length - active))
-    const open = Math.min(1, p * 1.08)
+    const open = Math.min(1, 0.14 + p * 0.96)
     const family = "'Inter', 'Inter Placeholder', system-ui, sans-serif"
     const display = "'Inter Display', 'Inter', system-ui, sans-serif"
     const mono = "'Geist Mono', ui-monospace, monospace"

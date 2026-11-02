@@ -30,8 +30,8 @@ const EVENTS: Ev[] = [
 ]
 
 const COLORS: Record<Kind, string> = {
-    projekt: "#0070F2",
-    match: "#30B05A",
+    projekt: "#5AA2FF",
+    match: "#4CD07D",
     verfuegbar: "#8CCBFF",
     event: "#F0AB00",
     besetzt: "#B57CFF",
