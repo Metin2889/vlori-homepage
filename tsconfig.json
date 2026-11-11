@@ -1,17 +1,48 @@
 {
   "compilerOptions": {
     "target": "ES2020",
-    "lib": ["ES2020", "DOM", "DOM.Iterable"],
+    "lib": [
+      "ES2020",
+      "DOM",
+      "DOM.Iterable"
+    ],
     "module": "ESNext",
     "moduleResolution": "Bundler",
-    "jsx": "react-jsx",
+    "jsx": "preserve",
     "strict": true,
     "noEmit": true,
     "skipLibCheck": true,
     "esModuleInterop": true,
     "isolatedModules": true,
-    "types": ["vitest/globals"],
-    "paths": { "framer": ["./preview/framer-shim.ts"] }
+    "types": [
+      "vitest/globals"
+    ],
+    "paths": {
+      "framer": [
+        "./preview/framer-shim.ts"
+      ]
+    },
+    "allowJs": false,
+    "incremental": true,
+    "resolveJsonModule": true,
+    "plugins": [
+      {
+        "name": "next"
+      }
+    ]
   },
-  "include": ["framer/code", "preview/*.tsx", "preview/framer-shim.ts", "tests"]
+  "include": [
+    "next-env.d.ts",
+    "app",
+    "components",
+    "lib",
+    "framer/code",
+    "preview/*.tsx",
+    "preview/framer-shim.ts",
+    "tests",
+    ".next/types/**/*.ts"
+  ],
+  "exclude": [
+    "node_modules"
+  ]
 }
