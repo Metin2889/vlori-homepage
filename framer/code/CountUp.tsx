@@ -27,8 +27,17 @@ function pick(obj: any, path: string): number | undefined {
  * @framerSupportedLayoutWidth auto
  * @framerSupportedLayoutHeight auto
  */
-export default function CountUp(props: Props) {
-    const { value, suffix, endpoint, path, color, fontSize, duration, style } = props
+export default function CountUp(props: Partial<Props>) {
+    const {
+        value = 128,
+        suffix = "",
+        endpoint = "",
+        path = "stats.openProjects",
+        color = "#FFFFFF",
+        fontSize = 44,
+        duration = 1.1,
+        style,
+    } = props
     const ref = React.useRef<HTMLSpanElement>(null)
     const [target, setTarget] = React.useState(value)
     const [shown, setShown] = React.useState(0)
@@ -102,22 +111,13 @@ export default function CountUp(props: Props) {
     )
 }
 
-CountUp.defaultProps = {
-    value: 128,
-    suffix: "",
-    endpoint: "",
-    path: "stats.openProjects",
-    color: "#FFFFFF",
-    fontSize: 44,
-    duration: 1.1,
-}
 
 addPropertyControls(CountUp, {
-    value: { type: ControlType.Number, title: "Wert", min: 0, max: 1000000, step: 1 },
-    suffix: { type: ControlType.String, title: "Suffix" },
-    endpoint: { type: ControlType.String, title: "Live-URL", placeholder: "https://app…/_api/home" },
-    path: { type: ControlType.String, title: "JSON-Pfad" },
-    color: { type: ControlType.Color, title: "Farbe" },
-    fontSize: { type: ControlType.Number, title: "Größe", min: 12, max: 120 },
-    duration: { type: ControlType.Number, title: "Dauer (s)", min: 0.2, max: 4, step: 0.1 },
+    value: { type: ControlType.Number, defaultValue: 128, title: "Wert", min: 0, max: 1000000, step: 1 },
+    suffix: { type: ControlType.String, defaultValue: "", title: "Suffix" },
+    endpoint: { type: ControlType.String, defaultValue: "", title: "Live-URL", placeholder: "https://app…/_api/home" },
+    path: { type: ControlType.String, defaultValue: "stats.openProjects", title: "JSON-Pfad" },
+    color: { type: ControlType.Color, defaultValue: "#FFFFFF", title: "Farbe" },
+    fontSize: { type: ControlType.Number, defaultValue: 44, title: "Größe", min: 12, max: 120 },
+    duration: { type: ControlType.Number, defaultValue: 1.1, title: "Dauer (s)", min: 0.2, max: 4, step: 0.1 },
 })

@@ -58,8 +58,14 @@ interface Props {
  * @framerSupportedLayoutHeight auto
  * @framerIntrinsicWidth 420
  */
-export default function LiveFeed(props: Props) {
-    const { dark, layout, visible, interval, style } = props
+export default function LiveFeed(props: Partial<Props>) {
+    const {
+        dark = true,
+        layout = "stack",
+        visible = 3,
+        interval = 2.8,
+        style,
+    } = props
     const [start, setStart] = React.useState(0)
     const [paused, setPaused] = React.useState(false)
 
@@ -67,7 +73,10 @@ export default function LiveFeed(props: Props) {
         if (RenderTarget.current() === RenderTarget.canvas || paused) return
         const reduce = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches
         if (reduce) return
-        const id = window.setInterval(() => setStart((s) => (s + 1) % EVENTS.length), Math.max(1200, interval * 1000))
+        const id = window.setInterval(() => {
+            if (document.hidden) return
+            setStart((s) => (s + 1) % EVENTS.length)
+        }, Math.max(1200, interval * 1000))
         return () => window.clearInterval(id)
     }, [interval, paused])
 
@@ -89,7 +98,10 @@ export default function LiveFeed(props: Props) {
         <div
             onMouseEnter={() => setPaused(true)}
             onMouseLeave={() => setPaused(false)}
-            aria-live="polite"
+            onFocus={() => setPaused(true)}
+            onBlur={() => setPaused(false)}
+            role="region"
+            aria-label="Aktivitäten im vlori-Netzwerk"
             style={{
                 ...style,
                 boxSizing: "border-box",
@@ -157,16 +169,10 @@ export default function LiveFeed(props: Props) {
     )
 }
 
-LiveFeed.defaultProps = {
-    dark: true,
-    layout: "stack",
-    visible: 3,
-    interval: 2.8,
-}
 
 addPropertyControls(LiveFeed, {
-    dark: { type: ControlType.Boolean, title: "Dunkel" },
-    layout: { type: ControlType.Enum, title: "Layout", options: ["stack", "line"], optionTitles: ["Stapel", "Zeile"] },
-    visible: { type: ControlType.Number, title: "Anzahl", min: 1, max: 5, step: 1 },
-    interval: { type: ControlType.Number, title: "Takt (s)", min: 1.2, max: 8, step: 0.1 },
+    dark: { type: ControlType.Boolean, defaultValue: true, title: "Dunkel" },
+    layout: { type: ControlType.Enum, defaultValue: "stack", title: "Layout", options: ["stack", "line"], optionTitles: ["Stapel", "Zeile"] },
+    visible: { type: ControlType.Number, defaultValue: 3, title: "Anzahl", min: 1, max: 5, step: 1 },
+    interval: { type: ControlType.Number, defaultValue: 2.8, title: "Takt (s)", min: 1.2, max: 8, step: 0.1 },
 })

@@ -54,8 +54,14 @@ interface Props {
  * @framerSupportedLayoutHeight auto
  * @framerIntrinsicWidth 620
  */
-export default function HeroSearch(props: Props) {
-    const { appUrl, accent, ink, openInNewTab, style } = props
+export default function HeroSearch(props: Partial<Props>) {
+    const {
+        appUrl = "https://app.vlori.de",
+        accent = "#0070F2",
+        ink = "#1D2D3E",
+        openInNewTab = false,
+        style,
+    } = props
     const [mode, setMode] = React.useState<Mode>("projekte")
     const [q, setQ] = React.useState("")
     const [module, setModule] = React.useState("")
@@ -152,7 +158,7 @@ export default function HeroSearch(props: Props) {
                         padding: "0 16px",
                         borderRadius: 12,
                         border: "1.5px solid " + (focus ? accent : "#D9DEE4"),
-                        boxShadow: focus ? "0 0 0 4px " + accent + "22" : "none",
+                        boxShadow: focus ? "0 0 0 4px color-mix(in srgb, " + accent + " 14%, transparent)" : "none",
                         transition: "border-color .2s, box-shadow .2s",
                     }}
                 >
@@ -252,16 +258,10 @@ export default function HeroSearch(props: Props) {
     )
 }
 
-HeroSearch.defaultProps = {
-    appUrl: "https://app.vlori.de",
-    accent: "#0070F2",
-    ink: "#1D2D3E",
-    openInNewTab: false,
-}
 
 addPropertyControls(HeroSearch, {
-    appUrl: { type: ControlType.String, title: "App-URL" },
-    accent: { type: ControlType.Color, title: "Akzent" },
-    ink: { type: ControlType.Color, title: "Text" },
-    openInNewTab: { type: ControlType.Boolean, title: "Neuer Tab" },
+    appUrl: { type: ControlType.String, defaultValue: "https://app.vlori.de", title: "App-URL" },
+    accent: { type: ControlType.Color, defaultValue: "#0070F2", title: "Akzent" },
+    ink: { type: ControlType.Color, defaultValue: "#1D2D3E", title: "Text" },
+    openInNewTab: { type: ControlType.Boolean, defaultValue: false, title: "Neuer Tab" },
 })

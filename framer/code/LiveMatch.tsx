@@ -59,6 +59,8 @@ const MODS: [string, string[]][] = [
     ["Integration", ["cpi", "integration suite", "pi/po"]],
 ]
 
+const NOT_MODULES = ["co-lead", "co-founder", "co-pilot", "co-working", "co-worker"]
+
 const CITIES = [
     "münchen", "berlin", "hamburg", "frankfurt", "stuttgart", "köln", "düsseldorf", "wien", "zürich",
     "leipzig", "hannover", "nürnberg", "walldorf", "mannheim", "dresden", "basel", "bremen", "essen",
@@ -156,6 +158,10 @@ function numbers(t: string) {
                 if (t[j] !== ".") s += t[j]
                 j++
             }
+            if (t[j] === "," && isDigit(t[j + 1])) {
+                j++
+                while (j < t.length && isDigit(t[j])) j++
+            }
             out.push({ n: parseInt(s, 10), before: t.slice(Math.max(0, i - 16), i), after: t.slice(j, j + 16).trim() })
             i = j
         } else i++
@@ -164,7 +170,8 @@ function numbers(t: string) {
 }
 
 export function parse(text: string): Parsed {
-    const t = " " + text.toLowerCase() + " "
+    let t = " " + text.toLowerCase() + " "
+    for (const w of NOT_MODULES) t = t.split(w).join(" " + w.slice(3))
     const p: Parsed = { modules: [] }
     for (const [code, aliases] of MODS) {
         if (aliases.some((a) => has(t, a))) p.modules.push(code)
@@ -174,7 +181,9 @@ export function parse(text: string): Parsed {
         if (a.indexOf("jahr") === 0 || a.indexOf("j.") === 0 || a.indexOf("yrs") === 0) {
             if (n.n > 0 && n.n < 45) p.years = n.n
         } else if (a.indexOf("%") === 0 || a.indexOf("prozent") === 0) {
-            if (n.n <= 100) p.remote = n.n
+            const rest = a.replace("%", "").replace("prozent", "").trim()
+            const onsite = rest.indexOf("vor ort") === 0 || rest.indexOf("onsite") === 0 || rest.indexOf("präsenz") === 0
+            if (n.n <= 100) p.remote = onsite ? 100 - n.n : n.n
         } else if (
             n.n >= 300 &&
             n.n <= 3000 &&
@@ -215,6 +224,18 @@ export function parse(text: string): Parsed {
         for (let q = 1; q <= 4; q++) if (has(t, "q" + q)) p.start = "ab Q" + q
     }
     return p
+}
+
+function isItem(x: any): x is Item {
+    return (
+        !!x &&
+        typeof x.title === "string" &&
+        Array.isArray(x.modules) &&
+        x.modules.length > 0 &&
+        typeof x.rate === "number" &&
+        typeof x.remote === "number" &&
+        typeof x.years === "number"
+    )
 }
 
 function fmt(n: number) {
@@ -261,10 +282,10 @@ export function score(p: Parsed, item: Item, mode: Mode): Scored {
     } else add(15, 0.7)
 
     if (p.city) {
-        const same = item.city.toLowerCase() === p.city.toLowerCase()
+        const same = (item.city || "").toLowerCase() === p.city.toLowerCase()
         add(8, same ? 1 : item.remote >= 80 ? 0.85 : 0.35)
         if (same) good.push(item.city)
-        else if (item.remote < 80) bad.push(item.city + " statt " + p.city)
+        else if (item.remote < 80 && item.city) bad.push(item.city + " statt " + p.city)
     } else add(8, 0.7)
 
     if (p.industry) {
@@ -347,14 +368,22 @@ interface Props {
  * @framerSupportedLayoutHeight auto
  * @framerIntrinsicWidth 600
  */
-export default function LiveMatch(props: Props) {
-    const { mode, appUrl, endpoint, accent, autoType, style } = props
+export default function LiveMatch(props: Partial<Props>) {
+    const {
+        mode = "berater",
+        appUrl = "https://app.vlori.de",
+        endpoint = "",
+        accent = "#0070F2",
+        autoType = true,
+        style,
+    } = props
     const isCanvas = RenderTarget.current() === RenderTarget.canvas
     const [text, setText] = React.useState(isCanvas ? EXAMPLES[mode][0] : "")
     const [touched, setTouched] = React.useState(false)
     const [remote, setRemote] = React.useState<Item[] | null>(null)
     const [focus, setFocus] = React.useState(false)
     const typing = React.useRef(0)
+    const delay = React.useRef(0)
     const rootRef = React.useRef<HTMLDivElement>(null)
 
     React.useEffect(() => {
@@ -363,8 +392,9 @@ export default function LiveMatch(props: Props) {
         fetch(endpoint)
             .then((r) => r.json())
             .then((d) => {
-                const arr = Array.isArray(d) ? d : d && Array.isArray(d.items) ? d.items : null
-                if (!off && arr && arr.length) setRemote(arr)
+                const arr = Array.isArray(d) ? d : d && Array.isArray(d.items) ? d.items : []
+                const valid = arr.filter(isItem)
+                if (!off && valid.length) setRemote(valid)
             })
             .catch(() => {})
         return () => {
@@ -398,7 +428,7 @@ export default function LiveMatch(props: Props) {
         const start = () => {
             if (started) return
             started = true
-            window.setTimeout(() => {
+            delay.current = window.setTimeout(() => {
                 if (!touchedRef.current) typeExample(EXAMPLES[mode][0])
             }, 700)
         }
@@ -418,9 +448,18 @@ export default function LiveMatch(props: Props) {
         io.observe(el)
         return () => {
             io.disconnect()
+            window.clearTimeout(delay.current)
             window.clearInterval(typing.current)
         }
     }, [mode, autoType])
+
+    React.useEffect(
+        () => () => {
+            window.clearTimeout(delay.current)
+            window.clearInterval(typing.current)
+        },
+        []
+    )
 
     const touchedRef = React.useRef(false)
     touchedRef.current = touched
@@ -452,7 +491,7 @@ export default function LiveMatch(props: Props) {
     const muted = "#556B82"
     const base = (appUrl || "").replace(new RegExp("/$"), "")
     const ctaUrl =
-        base + "/registrieren?rolle=" + (mode === "berater" ? "berater" : "unternehmen") + (hasInput ? "&q=" + encodeURIComponent(text.trim()) : "")
+        base + "/registrieren?typ=" + (mode === "berater" ? "berater" : "unternehmen") + (hasInput ? "&q=" + encodeURIComponent(text.trim()) : "")
 
     return (
         <div
@@ -472,7 +511,7 @@ export default function LiveMatch(props: Props) {
                 color: ink,
             }}
         >
-            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10 }}>
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 10 }}>
                 <div style={{ display: "flex", alignItems: "center", gap: 8, font: "500 12px/1 " + mono, letterSpacing: "0.06em", textTransform: "uppercase", color: accent }}>
                     <motion.span
                         animate={{ opacity: [1, 0.35, 1], scale: [1, 0.85, 1] }}
@@ -490,7 +529,7 @@ export default function LiveMatch(props: Props) {
                 style={{
                     borderRadius: 14,
                     border: "1.5px solid " + (focus ? accent : "#D9DEE4"),
-                    boxShadow: focus ? "0 0 0 4px " + accent + "22" : "none",
+                    boxShadow: focus ? "0 0 0 4px color-mix(in srgb, " + accent + " 14%, transparent)" : "none",
                     transition: "border-color .2s, box-shadow .2s",
                     padding: "12px 14px",
                 }}
@@ -507,6 +546,12 @@ export default function LiveMatch(props: Props) {
                         }
                     }}
                     onBlur={() => setFocus(false)}
+                    onKeyDown={(e) => {
+                        if (e.key === "Enter" && !e.shiftKey && hasInput) {
+                            e.preventDefault()
+                            window.location.href = ctaUrl
+                        }
+                    }}
                     onChange={(e) => {
                         setTouched(true)
                         setText(e.target.value)
@@ -592,6 +637,10 @@ export default function LiveMatch(props: Props) {
                 ))}
             </div>
 
+            <div aria-live="polite" aria-atomic="false" style={{ position: "absolute", width: 1, height: 1, overflow: "hidden", clip: "rect(0 0 0 0)" }}>
+                {results.length > 0 ? (mode === "berater" ? "Bester Treffer: " : "Beste Person: ") + results[0].item.title + ", Score " + results[0].score : ""}
+            </div>
+
             <AnimatePresence initial={false}>
                 {results.length > 0 && (
                     <motion.div
@@ -603,7 +652,7 @@ export default function LiveMatch(props: Props) {
                         style={{ overflow: "hidden" }}
                     >
                         <div style={{ display: "flex", flexDirection: "column", gap: 8, paddingTop: 2 }}>
-                            <div style={{ display: "flex", justifyContent: "space-between", font: "500 12px/1 " + mono, letterSpacing: "0.06em", textTransform: "uppercase", color: muted, padding: "2px 2px 4px" }}>
+                            <div style={{ display: "flex", justifyContent: "space-between", flexWrap: "wrap", gap: 8, font: "500 12px/1 " + mono, letterSpacing: "0.06em", textTransform: "uppercase", color: muted, padding: "2px 2px 4px" }}>
                                 <span>{mode === "berater" ? "Passende Projekte" : "Passende Expert/innen"}</span>
                                 <span>Score · Gründe</span>
                             </div>
@@ -628,7 +677,7 @@ export default function LiveMatch(props: Props) {
                                     <div style={{ flex: 1, minWidth: 0, display: "flex", flexDirection: "column", gap: 5 }}>
                                         <div style={{ font: "600 14.5px/1.25 " + family, color: ink, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{r.item.title}</div>
                                         <div style={{ font: "400 12.5px/1.3 " + family, color: muted }}>
-                                            {r.item.sub + " · " + r.item.city + " · " + fmt(r.item.rate) + " €"}
+                                            {[r.item.sub, r.item.city, fmt(r.item.rate) + " €"].filter(Boolean).join(" · ")}
                                         </div>
                                         <div style={{ display: "flex", flexWrap: "wrap", gap: "3px 10px", font: "500 12px/1.4 " + family }}>
                                             {r.good.slice(0, 3).map((g) => (
@@ -673,23 +722,17 @@ export default function LiveMatch(props: Props) {
     )
 }
 
-LiveMatch.defaultProps = {
-    mode: "berater",
-    appUrl: "https://app.vlori.de",
-    endpoint: "",
-    accent: "#0070F2",
-    autoType: true,
-}
 
 addPropertyControls(LiveMatch, {
     mode: {
         type: ControlType.Enum,
+        defaultValue: "berater",
         title: "Sicht",
         options: ["berater", "unternehmen"],
         optionTitles: ["Berater/in", "Unternehmen"],
     },
-    appUrl: { type: ControlType.String, title: "App-URL" },
-    endpoint: { type: ControlType.String, title: "Live-Daten", placeholder: "https://…/items.json" },
-    accent: { type: ControlType.Color, title: "Akzent" },
-    autoType: { type: ControlType.Boolean, title: "Auto-Tippen" },
+    appUrl: { type: ControlType.String, defaultValue: "https://app.vlori.de", title: "App-URL" },
+    endpoint: { type: ControlType.String, defaultValue: "", title: "Live-Daten", placeholder: "https://…/items.json" },
+    accent: { type: ControlType.Color, defaultValue: "#0070F2", title: "Akzent" },
+    autoType: { type: ControlType.Boolean, defaultValue: true, title: "Auto-Tippen" },
 })

@@ -1,6 +1,6 @@
 import * as React from "react"
 import { addPropertyControls, ControlType, RenderTarget } from "framer"
-import { motion, animate } from "framer-motion"
+import { motion, animate, LayoutGroup } from "framer-motion"
 
 /**
  * vlori – Tagessatz-Radar
@@ -36,6 +36,18 @@ const DATA: Stat[] = [
 const MIN = 800
 const MAX = 1450
 
+function isStat(x: any): x is Stat {
+    return (
+        !!x &&
+        typeof x.code === "string" &&
+        typeof x.median === "number" &&
+        typeof x.p25 === "number" &&
+        typeof x.p75 === "number" &&
+        Array.isArray(x.demand) &&
+        x.demand.length > 1
+    )
+}
+
 function fmt(n: number) {
     return Math.round(n).toLocaleString("de-DE")
 }
@@ -67,8 +79,13 @@ interface Props {
  * @framerSupportedLayoutHeight auto
  * @framerIntrinsicWidth 1120
  */
-export default function RateRadar(props: Props) {
-    const { accent, endpoint, appUrl, style } = props
+export default function RateRadar(props: Partial<Props>) {
+    const {
+        accent = "#0070F2",
+        endpoint = "",
+        appUrl = "https://app.vlori.de",
+        style,
+    } = props
     const [data, setData] = React.useState<Stat[]>(DATA)
     const [sel, setSel] = React.useState(0)
     const [w, setW] = React.useState(1120)
@@ -89,9 +106,10 @@ export default function RateRadar(props: Props) {
         fetch(endpoint)
             .then((r) => r.json())
             .then((d) => {
-                const arr = Array.isArray(d) ? d : d && Array.isArray(d.modules) ? d.modules : null
-                if (!off && arr && arr.length) {
-                    setData(arr)
+                const arr = Array.isArray(d) ? d : d && Array.isArray(d.modules) ? d.modules : []
+                const valid: Stat[] = arr.filter(isStat).map((x: Stat) => ({ ...x, name: x.name || x.code, remote: x.remote || 0, open: x.open || 0 }))
+                if (!off && valid.length) {
+                    setData(valid)
                     setLive(true)
                 }
             })
@@ -106,7 +124,8 @@ export default function RateRadar(props: Props) {
     const family = "'Inter', 'Inter Placeholder', system-ui, sans-serif"
     const display = "'Inter Display', 'Inter', system-ui, sans-serif"
     const mono = "'Geist Mono', ui-monospace, monospace"
-    const pos = (n: number) => ((n - MIN) / (MAX - MIN)) * 100
+    const pos = (n: number) => Math.max(0, Math.min(100, ((n - MIN) / (MAX - MIN)) * 100))
+    const uid = React.useId().replace(/:/g, "")
 
     const sw = 320
     const sh = 84
@@ -115,7 +134,7 @@ export default function RateRadar(props: Props) {
     const pts = s.demand.map((d, i) => [(i / (s.demand.length - 1)) * sw, sh - ((d - dmin) / (dmax - dmin)) * sh])
     const line = pts.map((p, i) => (i ? "L" : "M") + p[0].toFixed(1) + " " + p[1].toFixed(1)).join(" ")
     const area = line + " L " + sw + " " + sh + " L 0 " + sh + " Z"
-    const trend = Math.round(((s.demand[s.demand.length - 1] - s.demand[0]) / s.demand[0]) * 100)
+    const trend = s.demand[0] ? Math.round(((s.demand[s.demand.length - 1] - s.demand[0]) / s.demand[0]) * 100) : 0
     const sorted = data.map((d, i) => ({ d, i })).sort((a, b) => b.d.median - a.d.median)
     const base = (appUrl || "").replace(new RegExp("/$"), "")
 
@@ -150,6 +169,7 @@ export default function RateRadar(props: Props) {
                 fontFamily: family,
             }}
         >
+            <LayoutGroup id={"radar" + uid}>
             <div role="tablist" aria-label="SAP-Modul" style={{ display: "flex", gap: 6, overflowX: "auto", paddingBottom: 4, scrollbarWidth: "none" }}>
                 {data.map((d, i) => {
                     const on = i === sel
@@ -184,6 +204,7 @@ export default function RateRadar(props: Props) {
                     )
                 })}
             </div>
+            </LayoutGroup>
 
             <div style={{ display: "grid", gridTemplateColumns: narrow ? "1fr" : "1.25fr 1fr", gap: 16 }}>
                 <div style={{ ...card, display: "flex", flexDirection: "column", gap: 22 }}>
@@ -238,12 +259,12 @@ export default function RateRadar(props: Props) {
                         </div>
                         <svg viewBox={"0 0 " + sw + " " + sh} preserveAspectRatio="none" style={{ width: "100%", height: 84, marginTop: 12, overflow: "visible" }}>
                             <defs>
-                                <linearGradient id="rr-fill" x1="0" x2="0" y1="0" y2="1">
+                                <linearGradient id={"rr-fill" + uid} x1="0" x2="0" y1="0" y2="1">
                                     <stop offset="0%" stopColor="#0070F2" stopOpacity="0.45" />
                                     <stop offset="100%" stopColor="#0070F2" stopOpacity="0" />
                                 </linearGradient>
                             </defs>
-                            <motion.path key={"a" + s.code} d={area} fill="url(#rr-fill)" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.6 }} />
+                            <motion.path key={"a" + s.code} d={area} fill={"url(#rr-fill" + uid + ")"} initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.6 }} />
                             <motion.path
                                 key={"l" + s.code}
                                 d={line}
@@ -316,14 +337,9 @@ export default function RateRadar(props: Props) {
     )
 }
 
-RateRadar.defaultProps = {
-    accent: "#0070F2",
-    endpoint: "",
-    appUrl: "https://app.vlori.de",
-}
 
 addPropertyControls(RateRadar, {
-    accent: { type: ControlType.Color, title: "Akzent" },
-    endpoint: { type: ControlType.String, title: "Live-Daten", placeholder: "https://…/rates.json" },
-    appUrl: { type: ControlType.String, title: "App-URL" },
+    accent: { type: ControlType.Color, defaultValue: "#0070F2", title: "Akzent" },
+    endpoint: { type: ControlType.String, defaultValue: "", title: "Live-Daten", placeholder: "https://…/rates.json" },
+    appUrl: { type: ControlType.String, defaultValue: "https://app.vlori.de", title: "App-URL" },
 })

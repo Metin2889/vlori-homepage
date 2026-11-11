@@ -36,26 +36,28 @@ function Flower({ open, size }: { open: number; size: number }) {
     const o = Math.max(0, Math.min(1, open))
     const so = 0.35 + 0.65 * o
     const si = 0.3 + 0.7 * o
+    const twist = (1 - o) * -30
+    const uid = React.useId().replace(/:/g, "")
     return (
         <svg viewBox="-80 -80 160 160" width={size} height={size} style={{ overflow: "visible" }} aria-hidden="true">
             <defs>
-                <linearGradient id="sb-outer" x1="0" y1="0" x2="0" y2="-1" gradientUnits="objectBoundingBox">
+                <linearGradient id={"sb-outer" + uid} x1="0" y1="0" x2="0" y2="-1" gradientUnits="objectBoundingBox">
                     <stop offset="0%" stopColor="#0057D9" />
                     <stop offset="100%" stopColor="#0070F2" />
                 </linearGradient>
-                <radialGradient id="sb-glow">
+                <radialGradient id={"sb-glow" + uid}>
                     <stop offset="0%" stopColor="#8CCBFF" stopOpacity="0.55" />
                     <stop offset="100%" stopColor="#8CCBFF" stopOpacity="0" />
                 </radialGradient>
             </defs>
-            <circle r={78} fill="url(#sb-glow)" opacity={0.25 + 0.75 * o} />
+            <circle r={78} fill={"url(#sb-glow" + uid + ")"} opacity={0.25 + 0.75 * o} />
             {outer.map((a) => (
                 <path
                     key={"o" + a}
                     d={PETAL}
-                    fill="url(#sb-outer)"
+                    fill={"url(#sb-outer" + uid + ")"}
                     opacity={0.55 + 0.4 * o}
-                    transform={"rotate(" + a * o + ") scale(" + so + ")"}
+                    transform={"rotate(" + (a + twist) + ") scale(" + so + ")"}
                 />
             ))}
             {inner.map((a) => (
@@ -64,7 +66,7 @@ function Flower({ open, size }: { open: number; size: number }) {
                     d={PETAL_IN}
                     fill="#8CCBFF"
                     opacity={0.75 + 0.25 * o}
-                    transform={"rotate(" + a * o + ") scale(" + si + ")"}
+                    transform={"rotate(" + (a - twist) + ") scale(" + si + ")"}
                 />
             ))}
             <circle r={6 + 5 * o} fill="#fff" />
@@ -88,8 +90,15 @@ interface Props {
  * @framerIntrinsicWidth 1200
  * @framerIntrinsicHeight 2400
  */
-export default function ScrollBloom(props: Props) {
-    const { mode, kicker, title, accent, canvasProgress, style } = props
+export default function ScrollBloom(props: Partial<Props>) {
+    const {
+        mode = "berater",
+        kicker = "So wächst Ihre Karriere",
+        title = "Von der Saat zur Blüte – in vier Etappen.",
+        accent = "#0070F2",
+        canvasProgress = 0.8,
+        style,
+    } = props
     const isCanvas = RenderTarget.current() === RenderTarget.canvas
     const ref = React.useRef<HTMLDivElement>(null)
     const { scrollYProgress } = useScroll({ target: ref, offset: ["start start", "end end"] })
@@ -224,23 +233,17 @@ export default function ScrollBloom(props: Props) {
     )
 }
 
-ScrollBloom.defaultProps = {
-    mode: "berater",
-    kicker: "So wächst Ihre Karriere",
-    title: "Von der Saat zur Blüte – in vier Etappen.",
-    accent: "#0070F2",
-    canvasProgress: 0.8,
-}
 
 addPropertyControls(ScrollBloom, {
     mode: {
         type: ControlType.Enum,
+        defaultValue: "berater",
         title: "Sicht",
         options: ["berater", "unternehmen"],
         optionTitles: ["Berater/in", "Unternehmen"],
     },
-    kicker: { type: ControlType.String, title: "Kicker" },
-    title: { type: ControlType.String, title: "Titel", displayTextArea: true },
-    accent: { type: ControlType.Color, title: "Akzent" },
-    canvasProgress: { type: ControlType.Number, title: "Vorschau", min: 0, max: 1, step: 0.05 },
+    kicker: { type: ControlType.String, defaultValue: "So wächst Ihre Karriere", title: "Kicker" },
+    title: { type: ControlType.String, defaultValue: "Von der Saat zur Blüte – in vier Etappen.", title: "Titel", displayTextArea: true },
+    accent: { type: ControlType.Color, defaultValue: "#0070F2", title: "Akzent" },
+    canvasProgress: { type: ControlType.Number, defaultValue: 0.8, title: "Vorschau", min: 0, max: 1, step: 0.05 },
 })
