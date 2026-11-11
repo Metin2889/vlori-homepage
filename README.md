@@ -1,4 +1,4 @@
-# vlori – Homepage (Framer)
+# vlori – Homepage (Framer + Next.js/Vercel)
 
 Marketing-Startseite für **vlori**, das deutschsprachige Netzwerk für SAP-Projekte und SAP-Expertinnen & Experten.
 
@@ -50,16 +50,47 @@ Alle Links und die Suche zeigen auf `https://app.vlori.de` (die Floot-App). Bei 
 2. **Projekt-Alarm** – vor dem CTA bzw. neben der Projektbörse. Ohne **POST-Endpunkt** wird in die Registrierung weitergeleitet; mit Endpunkt kommt `{ email, modules, remote, consent, source }` als JSON (Double-Opt-in muss der Endpunkt übernehmen).
 3. **SEO-Schema** – einmal irgendwo auf `/` ablegen (1 × 1 px). **Website-URL** auf die finale Domain setzen und die FAQ-Antworten im Property **FAQ** ergänzen (vorbelegt sind nur die Antworten, die auf der Seite bereits stehen).
 
+## Website auf Vercel (Next.js)
+
+Neben den Framer-Komponenten enthält das Repo eine eigenständige Next.js-Website (`app/`, `components/`, `lib/`), die dieselben Komponenten aus `framer/code` verwendet und auf Vercel läuft:
+
+| Route | Inhalt |
+|---|---|
+| `/` | Startseite für SAP-Berater/innen |
+| `/unternehmen` | Startseite für Unternehmen |
+| `/api/projekt-alarm` | `POST` – speichert einen Projekt-Alarm (Double-Opt-in) |
+| `/api/projekt-alarm/bestaetigen`, `/abmelden` | Bestätigungs- und Abmeldelink aus der E-Mail |
+| `/api/live-match?typ=projekte\|berater` | Live-Daten für den Live-Match |
+| `/api/raten` | Tagessatz-Statistiken für den Tagessatz-Radar |
+| `/api/kennzahlen` | Zähler für die Kennzahlen im Hero |
+| `/sitemap.xml`, `/robots.txt` | SEO |
+
+Ohne Datenbank zeigt die Seite Beispieldaten, und der Projekt-Alarm leitet zur Registrierung in der App weiter.
+
+### Einrichtung (einmalig)
+
+1. **Vercel:** https://vercel.com/new → GitHub-Repo `vlori-homepage` importieren. Framework „Next.js“ wird automatisch erkannt.
+2. **Umgebungsvariablen** in Vercel → Settings → Environment Variables (siehe `.env.example`):
+   - `NEXT_PUBLIC_APP_URL` – Adresse der Floot-App (solange `app.vlori.de` nicht existiert: die `*.floot.app`-Adresse)
+   - `NEXT_PUBLIC_SITE_URL` – endgültige Adresse der Website, z. B. `https://vlori.de`
+3. **Optional, Supabase** (Projekt-Alarm & Live-Daten): kostenloses Projekt in Region *Frankfurt (eu-central-1)* anlegen, `supabase/schema.sql` im SQL Editor ausführen, dann `SUPABASE_URL` und `SUPABASE_SERVICE_ROLE_KEY` (Settings → API) in Vercel eintragen.
+4. **Optional, Bestätigungs-E-Mails:** bei Resend eine Domain verifizieren, dann `RESEND_API_KEY` und `ALERT_FROM_EMAIL` setzen. Ohne Resend wird der Alarm unbestätigt gespeichert.
+5. **Domain:** Vercel → Settings → Domains → `vlori.de` und `www.vlori.de` hinzufügen und die angezeigten DNS-Einträge beim Domain-Anbieter setzen.
+
+Hinweis: Der kostenlose Vercel-Hobby-Plan ist laut Vercel nur für nicht-kommerzielle Nutzung gedacht; für den Livebetrieb ist Vercel Pro vorgesehen.
+
 ## Entwicklung
 
 ```bash
 npm install
-npm run dev        # Vorschau aller Komponenten: http://localhost:5173 (?sicht=unternehmen)
+npm run dev        # Next.js-Website: http://localhost:3000 (/unternehmen)
+npm run preview    # Vorschau aller Framer-Komponenten: http://localhost:5173 (?sicht=unternehmen)
 npm run typecheck
 npm test
+npm run build
 ```
 
-Die Vorschau ersetzt das Paket `framer` durch `preview/framer-shim.ts`; in Framer selbst werden die Dateien unverändert als Code-Komponenten eingefügt.
+Website, Vorschau und Tests ersetzen das Paket `framer` durch `preview/framer-shim.ts`; in Framer selbst werden die Dateien unverändert als Code-Komponenten eingefügt. Schriften (Inter, Geist Mono) werden selbst gehostet, es gibt keine Anfragen an Google Fonts.
 
 ## Rechtlicher Hinweis
 
