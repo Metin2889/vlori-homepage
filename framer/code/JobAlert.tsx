@@ -141,7 +141,10 @@ export default function JobAlert(props: Partial<Props>) {
                                 autoComplete="email"
                                 placeholder="name@beispiel.de"
                                 value={email}
-                                onChange={(e) => setEmail(e.target.value)}
+                                onChange={(e) => {
+                                    setEmail(e.target.value)
+                                    setBadMail(false)
+                                }}
                                 aria-invalid={badMail}
                                 style={{ flex: "1 1 220px", minWidth: 0, height: 48, padding: "0 14px", borderRadius: 12, border: "1px solid #C9D3DE", font: "400 15px/1 " + family, color: ink, outlineColor: accent }}
                             />
