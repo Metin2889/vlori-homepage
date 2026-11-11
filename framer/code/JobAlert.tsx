@@ -44,6 +44,7 @@ export default function JobAlert(props: Partial<Props>) {
     const [consent, setConsent] = React.useState(false)
     const [state, setState] = React.useState<State>("idle")
     const [error, setError] = React.useState("")
+    const [badMail, setBadMail] = React.useState(false)
     const id = React.useId()
     const family = "'Inter', 'Inter Placeholder', system-ui, sans-serif"
     const ink = "#1D2D3E"
@@ -56,7 +57,9 @@ export default function JobAlert(props: Partial<Props>) {
         e.preventDefault()
         const chosen = picked.filter((m) => modules.includes(m))
         if (!chosen.length) return setError("Bitte mindestens ein Modul wählen.")
-        if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email.trim())) return setError("Bitte eine gültige E-Mail-Adresse eingeben.")
+        const mailOk = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email.trim())
+        setBadMail(!mailOk)
+        if (!mailOk) return setError("Bitte eine gültige E-Mail-Adresse eingeben.")
         if (!consent) return setError("Bitte der Benachrichtigung per E-Mail zustimmen.")
         setError("")
         if (!endpoint) {
@@ -139,7 +142,7 @@ export default function JobAlert(props: Partial<Props>) {
                                 placeholder="name@beispiel.de"
                                 value={email}
                                 onChange={(e) => setEmail(e.target.value)}
-                                aria-invalid={!!error && !email}
+                                aria-invalid={badMail}
                                 style={{ flex: "1 1 220px", minWidth: 0, height: 48, padding: "0 14px", borderRadius: 12, border: "1px solid #C9D3DE", font: "400 15px/1 " + family, color: ink, outlineColor: accent }}
                             />
                             <button
