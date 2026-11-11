@@ -19,6 +19,10 @@ Marketing-Startseite für **vlori**, das deutschsprachige Netzwerk für SAP-Proj
 | `framer/code/ScrollBloom.tsx` | **v2** Die vlori-Blüte öffnet sich beim Scrollen, vier Etappen werden nacheinander aktiv |
 | `framer/code/RateRadar.tsx` | **v2** Tagessatz-Radar: Median, Spanne, Remote-Quote, Nachfrage je SAP-Modul (Beispieldaten, optional Live-Endpunkt) |
 | `framer/code/LiveFeed.tsx` | **v2** Rotierender Aktivitäts-Feed im Hero |
+| `framer/code/EarningsCalculator.tsx` | **neu** Provisions-Rechner: Tagessatz, Projekttage, Vermittler-Marge → Mehrverdienst (Berater/in) bzw. Ersparnis (Unternehmen) mit 0 % Provision |
+| `framer/code/JobAlert.tsx` | **neu** Projekt-Alarm: Module wählen, E-Mail + Einwilligung → POST an `POST-Endpunkt` oder Weiterleitung in die Registrierung (`suchauftrag=1&module=…`) |
+| `framer/code/SeoSchema.tsx` | **neu** Unsichtbar: JSON-LD (Organization, WebSite mit Suchfeld, FAQPage) für Rich Results bei Google |
+| `preview/`, `tests/` | Lokale Vorschau (Vite, Framer-Shim) und Tests (Vitest) |
 | `design/tokens.json` | Farben, Typografie, Abstände, Radien, Animationen |
 | `docs/funktionen.md` | Mapping Original-Funktion → Framer-Umsetzung |
 
@@ -39,6 +43,23 @@ Alle Links und die Suche zeigen auf `https://app.vlori.de` (die Floot-App). Bei 
 2. In der Hero-Suche das Property **App-URL** anpassen
 3. Für Live-Zahlen bei den vier Kennzahlen die **Live-URL** des `home`-Endpunkts eintragen
 4. Live-Match und Tagessatz-Radar haben ein Property **Live-Daten**: dort einen JSON-Endpunkt eintragen (gleiches Format wie die Beispieldaten im Code), dann ersetzen echte Daten die Beispieldaten
+
+## Neue Komponenten in Framer einbauen
+
+1. **Provisions-Rechner** – als eigene Sektion nach dem Tagessatz-Radar, auf `/unternehmen` Property **Sicht** = Unternehmen.
+2. **Projekt-Alarm** – vor dem CTA bzw. neben der Projektbörse. Ohne **POST-Endpunkt** wird in die Registrierung weitergeleitet; mit Endpunkt kommt `{ email, modules, remote, consent, source }` als JSON (Double-Opt-in muss der Endpunkt übernehmen).
+3. **SEO-Schema** – einmal irgendwo auf `/` ablegen (1 × 1 px). **Website-URL** auf die finale Domain setzen und die FAQ-Antworten im Property **FAQ** ergänzen (vorbelegt sind nur die Antworten, die auf der Seite bereits stehen).
+
+## Entwicklung
+
+```bash
+npm install
+npm run dev        # Vorschau aller Komponenten: http://localhost:5173 (?sicht=unternehmen)
+npm run typecheck
+npm test
+```
+
+Die Vorschau ersetzt das Paket `framer` durch `preview/framer-shim.ts`; in Framer selbst werden die Dateien unverändert als Code-Komponenten eingefügt.
 
 ## Rechtlicher Hinweis
 

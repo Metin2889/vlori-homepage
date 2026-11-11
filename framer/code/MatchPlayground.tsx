@@ -57,8 +57,12 @@ interface Props {
  * @framerSupportedLayoutHeight auto
  * @framerIntrinsicWidth 1120
  */
-export default function MatchPlayground(props: Props) {
-    const { mode, accent, style } = props
+export default function MatchPlayground(props: Partial<Props>) {
+    const {
+        mode = "berater",
+        accent = "#0070F2",
+        style,
+    } = props
     const ber = mode === "berater"
     const [mods, setMods] = React.useState<string[]>(["S/4HANA", "FI", "CO"])
     const [rate, setRate] = React.useState(ber ? 1050 : 1150)
@@ -69,9 +73,13 @@ export default function MatchPlayground(props: Props) {
     const ref = React.useRef<HTMLDivElement>(null)
 
     React.useEffect(() => {
+        setRate(ber ? 1050 : 1150)
+    }, [ber])
+
+    React.useEffect(() => {
         const el = ref.current
         if (!el || typeof ResizeObserver === "undefined") return
-        const ro = new ResizeObserver(([e]) => setW(e.contentRect.width))
+        const ro = new ResizeObserver(([e]) => e.contentRect.width > 0 && setW(e.contentRect.width))
         ro.observe(el)
         return () => ro.disconnect()
     }, [])
@@ -232,13 +240,17 @@ export default function MatchPlayground(props: Props) {
                         })}
                     </div>
                 </div>
-                <label style={{ display: "flex", alignItems: "center", justifyContent: "space-between", cursor: "pointer", font: "600 13px/1 " + family }}>
+                <button
+                    type="button"
+                    role="switch"
+                    aria-checked={soon}
+                    onClick={() => setSoon(!soon)}
+                    style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, width: "100%", padding: 0, border: 0, background: "transparent", color: ink, textAlign: "left", cursor: "pointer", font: "600 13px/1.3 " + family }}
+                >
                     <span>{ber ? "Nur Projekte mit Start in 1 Woche" : "Nur sofort verfügbar"}</span>
                     <span
-                        onClick={() => setSoon(!soon)}
-                        role="switch"
-                        aria-checked={soon}
-                        style={{ position: "relative", width: 42, height: 24, borderRadius: 99, background: soon ? accent : "#D2DAE3", transition: "background .2s" }}
+                        aria-hidden="true"
+                        style={{ position: "relative", flex: "0 0 auto", width: 42, height: 24, borderRadius: 99, background: soon ? accent : "#D2DAE3", transition: "background .2s" }}
                     >
                         <motion.span
                             animate={{ x: soon ? 20 : 2 }}
@@ -246,7 +258,7 @@ export default function MatchPlayground(props: Props) {
                             style={{ position: "absolute", top: 2, left: 0, width: 20, height: 20, borderRadius: 99, background: "#fff", boxShadow: "0 1px 3px rgba(0,0,0,.2)" }}
                         />
                     </span>
-                </label>
+                </button>
             </div>
 
             <div
@@ -311,17 +323,14 @@ export default function MatchPlayground(props: Props) {
     )
 }
 
-MatchPlayground.defaultProps = {
-    mode: "berater",
-    accent: "#0070F2",
-}
 
 addPropertyControls(MatchPlayground, {
     mode: {
         type: ControlType.Enum,
+        defaultValue: "berater",
         title: "Sicht",
         options: ["berater", "unternehmen"],
         optionTitles: ["Berater/in", "Unternehmen"],
     },
-    accent: { type: ControlType.Color, title: "Akzent" },
+    accent: { type: ControlType.Color, defaultValue: "#0070F2", title: "Akzent" },
 })

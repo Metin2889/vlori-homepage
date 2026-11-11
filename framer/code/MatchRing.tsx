@@ -24,10 +24,20 @@ interface Props {
  * @framerIntrinsicWidth 112
  * @framerIntrinsicHeight 112
  */
-export default function MatchRing(props: Props) {
-    const { score, size, stroke, color, track, textColor, showLabel, style } = props
+export default function MatchRing(props: Partial<Props>) {
+    const {
+        score: rawScore = 96,
+        size = 112,
+        stroke = 9,
+        color = "#0070F2",
+        track = "#E3ECF8",
+        textColor = "#1D2D3E",
+        showLabel = true,
+        style,
+    } = props
     const ref = React.useRef<HTMLDivElement>(null)
     const [p, setP] = React.useState(0)
+    const score = Math.max(0, Math.min(100, Math.round(rawScore)))
     const r = (size - stroke) / 2
     const c = 2 * Math.PI * r
 
@@ -116,22 +126,13 @@ export default function MatchRing(props: Props) {
     )
 }
 
-MatchRing.defaultProps = {
-    score: 96,
-    size: 112,
-    stroke: 9,
-    color: "#0070F2",
-    track: "#E3ECF8",
-    textColor: "#1D2D3E",
-    showLabel: true,
-}
 
 addPropertyControls(MatchRing, {
-    score: { type: ControlType.Number, title: "Score", min: 0, max: 100, step: 1 },
-    size: { type: ControlType.Number, title: "Größe", min: 32, max: 320 },
-    stroke: { type: ControlType.Number, title: "Linie", min: 2, max: 30 },
-    color: { type: ControlType.Color, title: "Farbe" },
-    track: { type: ControlType.Color, title: "Spur" },
-    textColor: { type: ControlType.Color, title: "Text" },
-    showLabel: { type: ControlType.Boolean, title: "Label" },
+    score: { type: ControlType.Number, defaultValue: 96, title: "Score", min: 0, max: 100, step: 1 },
+    size: { type: ControlType.Number, defaultValue: 112, title: "Größe", min: 32, max: 320 },
+    stroke: { type: ControlType.Number, defaultValue: 9, title: "Linie", min: 2, max: 30 },
+    color: { type: ControlType.Color, defaultValue: "#0070F2", title: "Farbe" },
+    track: { type: ControlType.Color, defaultValue: "#E3ECF8", title: "Spur" },
+    textColor: { type: ControlType.Color, defaultValue: "#1D2D3E", title: "Text" },
+    showLabel: { type: ControlType.Boolean, defaultValue: true, title: "Label" },
 })
