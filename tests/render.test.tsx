@@ -90,6 +90,20 @@ describe("EarningsCalculator.calc", () => {
     })
 })
 
+describe("JobAlert mit eigenen Modulen", () => {
+    it("übernimmt kein unsichtbares Standardmodul", () => {
+        const assign = vi.fn()
+        Object.defineProperty(window, "location", { value: { ...window.location, assign }, writable: true })
+        render(<JobAlert modules={["EWM", "TM"]} />)
+        fireEvent.click(screen.getByRole("button", { name: "TM" }))
+        fireEvent.change(screen.getByLabelText("E-Mail-Adresse"), { target: { value: "a@b.de" } })
+        fireEvent.click(screen.getByLabelText(/Projekte per E-Mail erhalten/))
+        fireEvent.submit(screen.getByRole("form"))
+        expect(assign.mock.calls[0][0]).toContain("module=EWM%2CTM")
+        expect(assign.mock.calls[0][0]).not.toContain("S%2F4HANA")
+    })
+})
+
 describe("SeoSchema", () => {
     it("gibt gültiges JSON-LD mit FAQPage aus", () => {
         const { container } = render(<SeoSchema />)

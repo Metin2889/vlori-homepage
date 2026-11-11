@@ -38,7 +38,7 @@ export default function JobAlert(props: Partial<Props>) {
         accent = "#0070F2",
         style,
     } = props
-    const [picked, setPicked] = React.useState<string[]>(["S/4HANA"])
+    const [picked, setPicked] = React.useState<string[]>(() => modules.slice(0, 1))
     const [remote, setRemote] = React.useState(false)
     const [email, setEmail] = React.useState("")
     const [consent, setConsent] = React.useState(false)
@@ -54,12 +54,13 @@ export default function JobAlert(props: Partial<Props>) {
 
     const submit = async (e: React.FormEvent) => {
         e.preventDefault()
-        if (!picked.length) return setError("Bitte mindestens ein Modul wählen.")
+        const chosen = picked.filter((m) => modules.includes(m))
+        if (!chosen.length) return setError("Bitte mindestens ein Modul wählen.")
         if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email.trim())) return setError("Bitte eine gültige E-Mail-Adresse eingeben.")
         if (!consent) return setError("Bitte der Benachrichtigung per E-Mail zustimmen.")
         setError("")
         if (!endpoint) {
-            const qs = new URLSearchParams({ typ: "berater", suchauftrag: "1", module: picked.join(",") })
+            const qs = new URLSearchParams({ typ: "berater", suchauftrag: "1", module: chosen.join(",") })
             if (remote) qs.set("remote", "1")
             window.location.assign(base + "/registrieren?" + qs.toString())
             return
@@ -69,7 +70,7 @@ export default function JobAlert(props: Partial<Props>) {
             const res = await fetch(endpoint, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ email: email.trim(), modules: picked, remote, consent: true, source: "homepage" }),
+                body: JSON.stringify({ email: email.trim(), modules: chosen, remote, consent: true, source: "homepage" }),
             })
             if (!res.ok) throw new Error(String(res.status))
             setState("done")
