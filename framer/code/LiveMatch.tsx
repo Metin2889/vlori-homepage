@@ -547,9 +547,9 @@ export default function LiveMatch(props: Partial<Props>) {
                     }}
                     onBlur={() => setFocus(false)}
                     onKeyDown={(e) => {
-                        if (e.key === "Enter" && !e.shiftKey && hasInput) {
+                        if (e.key === "Enter" && !e.shiftKey) {
                             e.preventDefault()
-                            window.location.href = ctaUrl
+                            if (hasInput) window.location.href = ctaUrl
                         }
                     }}
                     onChange={(e) => {
