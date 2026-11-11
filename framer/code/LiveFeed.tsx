@@ -100,6 +100,7 @@ export default function LiveFeed(props: Partial<Props>) {
             onMouseLeave={() => setPaused(false)}
             onFocus={() => setPaused(true)}
             onBlur={() => setPaused(false)}
+            tabIndex={0}
             role="region"
             aria-label="Aktivitäten im vlori-Netzwerk"
             style={{
