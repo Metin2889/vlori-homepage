@@ -79,7 +79,7 @@ export default function MatchPlayground(props: Partial<Props>) {
     React.useEffect(() => {
         const el = ref.current
         if (!el || typeof ResizeObserver === "undefined") return
-        const ro = new ResizeObserver(([e]) => setW(e.contentRect.width))
+        const ro = new ResizeObserver(([e]) => e.contentRect.width > 0 && setW(e.contentRect.width))
         ro.observe(el)
         return () => ro.disconnect()
     }, [])

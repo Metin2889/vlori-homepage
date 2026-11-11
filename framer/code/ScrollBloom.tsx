@@ -118,7 +118,7 @@ export default function ScrollBloom(props: Partial<Props>) {
     React.useEffect(() => {
         const el = ref.current
         if (!el || typeof ResizeObserver === "undefined") return
-        const ro = new ResizeObserver(([e]) => setW(e.contentRect.width))
+        const ro = new ResizeObserver(([e]) => e.contentRect.width > 0 && setW(e.contentRect.width))
         ro.observe(el)
         return () => ro.disconnect()
     }, [])
@@ -131,7 +131,7 @@ export default function ScrollBloom(props: Partial<Props>) {
     const family = "'Inter', 'Inter Placeholder', system-ui, sans-serif"
     const display = "'Inter Display', 'Inter', system-ui, sans-serif"
     const mono = "'Geist Mono', ui-monospace, monospace"
-    const flowerSize = narrow ? Math.min(w - 40, 300) : Math.min(520, w * 0.42)
+    const flowerSize = Math.max(120, narrow ? Math.min(w - 40, 300) : Math.min(520, w * 0.42))
 
     return (
         <div ref={ref} style={{ ...style, position: "relative", width: "100%", height: "100%" }}>
