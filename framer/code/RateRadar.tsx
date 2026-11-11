@@ -43,6 +43,8 @@ function isStat(x: any): x is Stat {
         typeof x.median === "number" &&
         typeof x.p25 === "number" &&
         typeof x.p75 === "number" &&
+        typeof x.remote === "number" &&
+        typeof x.open === "number" &&
         Array.isArray(x.demand) &&
         x.demand.length > 1
     )
@@ -107,7 +109,7 @@ export default function RateRadar(props: Partial<Props>) {
             .then((r) => r.json())
             .then((d) => {
                 const arr = Array.isArray(d) ? d : d && Array.isArray(d.modules) ? d.modules : []
-                const valid: Stat[] = arr.filter(isStat).map((x: Stat) => ({ ...x, name: x.name || x.code, remote: x.remote || 0, open: x.open || 0 }))
+                const valid: Stat[] = arr.filter(isStat).map((x: Stat) => ({ ...x, name: x.name || x.code }))
                 if (!off && valid.length) {
                     setData(valid)
                     setLive(true)
